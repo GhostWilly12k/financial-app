@@ -460,6 +460,30 @@ export function VideosPage({ onBack }: VideosPageProps) {
                 </p>
               </div>
             </div>
+            
+            {/* News Digest Button */}
+            <div className="mt-6 p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-semibold text-foreground mb-1">Stay Informed with Financial News</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Get AI-powered summaries of the latest financial news and market updates
+                  </p>
+                </div>
+                <Button 
+                  asChild
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  <a 
+                    href="http://localhost:3001" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    📰 View News Digest
+                  </a>
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

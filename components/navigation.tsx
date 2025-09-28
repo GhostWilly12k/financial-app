@@ -27,6 +27,13 @@ interface NavigationProps {
   streakDays: number
 }
 
+interface NavigationItem {
+  id: string
+  label: string
+  icon: any
+  external?: string
+}
+
 export function Navigation({ currentPage, onPageChange, userLevel, streakDays }: NavigationProps) {
   const [selectedLanguage, setSelectedLanguage] = useState("English")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -45,7 +52,7 @@ export function Navigation({ currentPage, onPageChange, userLevel, streakDays }:
     "Xitsonga",
   ]
 
-  const navigationItems = [
+  const navigationItems: NavigationItem[] = [
     { id: "home", label: "Home", icon: Home },
     { id: "compound-calculator", label: "Savings Calculator", icon: Calculator },
     { id: "loan-calculator", label: "Loan Calculator", icon: Target },
@@ -54,6 +61,7 @@ export function Navigation({ currentPage, onPageChange, userLevel, streakDays }:
     { id: "credit-tools", label: "Credit Tools", icon: AlertTriangle },
     { id: "videos", label: "Learn", icon: PlayCircle },
     { id: "achievements", label: "Achievements", icon: Trophy },
+    { id: "security-tools", label: "Security Tools", icon: AlertTriangle, external: "http://localhost:5000" },
   ]
 
   return (
@@ -79,7 +87,13 @@ export function Navigation({ currentPage, onPageChange, userLevel, streakDays }:
               <Button
                 key={item.id}
                 variant={currentPage === item.id ? "default" : "ghost"}
-                onClick={() => onPageChange(item.id)}
+                onClick={() => {
+                  if (item.external) {
+                    window.open(item.external, '_blank', 'noopener,noreferrer');
+                  } else {
+                    onPageChange(item.id);
+                  }
+                }}
                 className="p-2"
                 size="sm"
                 title={item.label}
@@ -143,8 +157,13 @@ export function Navigation({ currentPage, onPageChange, userLevel, streakDays }:
                   key={item.id}
                   variant={currentPage === item.id ? "default" : "outline"}
                   onClick={() => {
-                    onPageChange(item.id)
-                    setMobileMenuOpen(false)
+                    if (item.external) {
+                      window.open(item.external, '_blank', 'noopener,noreferrer');
+                      setMobileMenuOpen(false);
+                    } else {
+                      onPageChange(item.id);
+                      setMobileMenuOpen(false);
+                    }
                   }}
                   className="gap-2 justify-start text-xs py-2"
                   size="sm"

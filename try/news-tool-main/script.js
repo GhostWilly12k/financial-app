@@ -15,6 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const FEEDS = [
+  "https://bizmag.co.za/feed/",
   "https://mybroadband.co.za/news/feed/",
   "https://mg.co.za/feed/",
   "https://www.dailymaverick.co.za/dmrss/",
@@ -151,26 +152,36 @@ async function summariseArticle(article) {
     messages: [
       {
         role: "system",
-        content: `You are a news explainer that extracts the most important, factual takeaways from articles. Given an article, identify the key facts a citizen should know to stay informed. Output them as a concise, easy-to-read list.
+        content: `You are a financial news explainer for students and enthusiasts. 
+Your role is to extract the most important, factual takeaways from an article AND highlight 
+learning opportunities that deepen financial understanding.
+
 
                 Guidelines:
-                - Focus only on what matters: who, what, where, when, why, how.
-                - Highlight roles (e.g., political positions, business roles, public figures).
-                - Skip fluff, opinions, and rhetorical flourishes.
-                - Avoid jargon; explain in simple terms.
-                - If relevant, include why this matters to ordinary citizens.
-                - Write in plain text, not markdown.
-                - Return your output as valid JSON.
+- Focus on who, what, where, when, why, and how — especially in finance, economics, business, and policy.
+- Highlight key actors (companies, regulators, policymakers, investors, institutions).
+- Clarify market/economic impacts (stocks, bonds, currencies, commodities, industries).
+- Identify any financial concepts students should explore (e.g., interest rates, inflation, short-selling).
+- Skip fluff, opinions, and vague phrasing.
+- Write in simple, clear language, avoiding jargon unless it's a core finance term.
+- Add why this news matters both to markets and to financial learners.
+- Return only valid JSON.
+
 
                 Example output as JSON:
-                {
-                    keyFacts: [
-                        "Key fact 1",
-                        "Key fact 2",
-                        "Key fact 3",
-                        "...",
-                    ]
-                }`,
+{
+  "keyFacts": [
+    "Central bank raised interest rates by 0.25% to fight inflation.",
+    "This impacts borrowing costs for consumers and businesses.",
+    "Stock markets fell in response, particularly in the tech sector."
+  ],
+  "learningOpportunities": [
+    "Study how interest rate changes affect stock and bond prices.",
+    "Review the role of central banks in controlling inflation.",
+    "Explore why tech companies are more sensitive to interest rates."
+  ]
+}
+`,
       },
       {
         role: "user",
@@ -454,7 +465,7 @@ function buildHtmlPage(summaries) {
             <h1>📰 News Digest</h1>
             <p>Stay informed with AI-powered summaries</p>
             <p><strong>${currentDate}</strong></p>
-            <a href="http://localhost:5000" class="back-button">🛡️ Back to First Principles Bank</a>
+            <a href="http://localhost:3000" class="back-button">🛡️ Back to First Principles Bank</a>
         </header>
         
         <main class="articles-grid">
@@ -493,7 +504,7 @@ async function sendDigestEmail(html) {
   console.log("Email sent successfully!");
 }
 
-function startWebServer(port = 3000) {
+function startWebServer(port = 3001) {
   const server = http.createServer((req, res) => {
     if (req.url === '/' || req.url === '/news-digest.html') {
       try {
