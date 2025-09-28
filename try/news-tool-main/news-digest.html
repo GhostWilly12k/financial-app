@@ -1,0 +1,256 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Digest - Sunday, September 28, 2025</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --background: oklch(1 0 0);
+            --foreground: oklch(0.35 0 0);
+            --card: oklch(0.98 0 0);
+            --card-foreground: oklch(0.25 0 0);
+            --primary: oklch(0.55 0.15 200);
+            --primary-foreground: oklch(1 0 0);
+            --secondary: oklch(0.65 0.18 65);
+            --secondary-foreground: oklch(1 0 0);
+            --muted: oklch(0.98 0 0);
+            --muted-foreground: oklch(0.35 0 0);
+            --accent: oklch(0.65 0.18 65);
+            --accent-foreground: oklch(1 0 0);
+            --border: oklch(0.92 0 0);
+            --input: oklch(0.98 0 0);
+            --ring: oklch(0.55 0.15 200);
+            --radius: 0.5rem;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .back-button {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: var(--primary-foreground);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.2s;
+            display: inline-block;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .back-button:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: var(--primary-foreground);
+            text-decoration: none;
+            transform: translateY(-2px);
+        }
+
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .article-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .article-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .article-header {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: var(--primary-foreground);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .article-title {
+            font-size: 1.3rem;
+            line-height: 1.4;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .article-content {
+            padding: 25px;
+            color: var(--card-foreground);
+        }
+
+        .summary-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+
+        .summary-point {
+            margin-bottom: 12px;
+            padding-left: 20px;
+            position: relative;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .summary-point:before {
+            content: "•";
+            color: var(--primary);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        .article-actions {
+            text-align: center;
+            margin-top: 25px;
+        }
+
+        .read-more-btn {
+            background: var(--primary);
+            color: var(--primary-foreground);
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: calc(var(--radius) - 2px);
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: inline-block;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .read-more-btn:hover {
+            background: oklch(0.5 0.15 200);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .article-footer {
+            background: var(--muted);
+            padding: 15px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+
+        .source-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .source-link:hover {
+            text-decoration: underline;
+        }
+
+        .no-articles {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            margin-top: 50px;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .articles-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .article-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📰 News Digest</h1>
+            <p>Stay informed with AI-powered summaries</p>
+            <p><strong>Sunday, September 28, 2025</strong></p>
+            <a href="http://localhost:5000" class="back-button">🛡️ Back to First Principles Bank</a>
+        </header>
+        
+        <main class="articles-grid">
+            
+  <article class="article-card">
+    <header class="article-header">
+      <h2 class="article-title">Fochville residents accuse municipality of toying with their emotions over 'disruptive' water supply crisis</h2>
+    </header>
+    <div class="article-content">
+      <ul class="summary-list"><li class="summary-point">Residents of Kokosi Township in Fochville, West Rand, are experiencing a month-long water supply crisis.</li><li class="summary-point">The community protested on September 23 by marching to the N12 highway, demanding restoration of water supply or the resignation of Merafong Local Municipality mayor Nozuko Best.</li><li class="summary-point">Prior to the protest, the municipality partially restored water supply but then cut it off again on September 25, causing frustration among residents.</li><li class="summary-point">Buti Elliot Mtembu, speaking for residents, accused Merafong Local Municipality and Rand Water of playing political games with the community's water supply.</li><li class="summary-point">Residents have received no clear explanation for the inconsistent water supply from the municipality or Rand Water.</li><li class="summary-point">Municipality spokesperson Thabo Maloja denied accusations that municipal leaders sabotaged protests or manipulated water supply, emphasizing ongoing dialogue and commitment to resolving water issues.</li><li class="summary-point">Rand Water did not respond to requests for comment at the time of reporting.</li><li class="summary-point">The situation matters because access to reliable water is a basic service essential to health and daily living, and the community feels their rights and dignity are being undermined.</li></ul>
+      <div class="article-actions">
+        <a href="https://www.iol.co.za/news/south-africa/fochville-residents-accuse-municipality-of-toying-with-their-emotions-over-disruptive-water-supply-crisis-b9a7de00-f71b-4a93-b12a-370e437b7181" class="read-more-btn" target="_blank">Read Full Article</a>
+      </div>
+    </div>
+    <footer class="article-footer">
+      <a href="https://www.iol.co.za/news/south-africa/fochville-residents-accuse-municipality-of-toying-with-their-emotions-over-disruptive-water-supply-crisis-b9a7de00-f71b-4a93-b12a-370e437b7181" class="source-link" target="_blank">Source</a>
+    </footer>
+  </article>
+  
+        </main>
+        
+        <footer class="footer">
+            <p>Generated with AI • Updated automatically</p>
+        </footer>
+    </div>
+</body>
+</html>
