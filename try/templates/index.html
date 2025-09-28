@@ -1,582 +1,192 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phishing Detection Demo - First Principles Bank</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --background: oklch(1 0 0);
-            --foreground: oklch(0.35 0 0);
-            --card: oklch(0.98 0 0);
-            --card-foreground: oklch(0.25 0 0);
-            --primary: oklch(0.55 0.15 200);
-            --primary-foreground: oklch(1 0 0);
-            --secondary: oklch(0.65 0.18 65);
-            --secondary-foreground: oklch(1 0 0);
-            --muted: oklch(0.98 0 0);
-            --muted-foreground: oklch(0.35 0 0);
-            --accent: oklch(0.65 0.18 65);
-            --accent-foreground: oklch(1 0 0);
-            --border: oklch(0.92 0 0);
-            --input: oklch(0.98 0 0);
-            --ring: oklch(0.55 0.15 200);
-            --radius: 0.5rem;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Phishing Detection Demo - First Principles Bank</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        body {
-            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: var(--background);
-            color: var(--foreground);
-            line-height: 1.6;
-        }
-        
-        .container {
-            background-color: var(--card);
-            padding: 30px;
-            border-radius: var(--radius);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            border: 1px solid var(--border);
-        }
-        
-        h1 {
-            color: var(--foreground);
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2rem;
-            font-weight: 700;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--foreground);
-            font-size: 0.875rem;
-        }
-        
-        textarea {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid var(--border);
-            border-radius: calc(var(--radius) - 2px);
-            font-size: 16px;
-            font-family: inherit;
-            resize: vertical;
-            min-height: 100px;
-            box-sizing: border-box;
-            background-color: var(--input);
-            color: var(--foreground);
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        
-        textarea:focus {
-            outline: none;
-            border-color: var(--ring);
-            box-shadow: 0 0 0 3px rgba(86, 142, 255, 0.1);
-        }
-        
-        button {
-            background-color: var(--primary);
-            color: var(--primary-foreground);
-            padding: 12px 24px;
-            border: none;
-            border-radius: calc(var(--radius) - 2px);
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            font-family: inherit;
-            transition: all 0.2s;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        }
-        
-        button:hover {
-            background-color: oklch(0.5 0.15 200);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        
-        button:disabled {
-            background-color: var(--muted);
-            color: var(--muted-foreground);
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-        
-        .result {
-            margin-top: 20px;
-            padding: 16px;
-            border-radius: calc(var(--radius) - 2px);
-            font-size: 18px;
-            font-weight: 600;
-            text-align: center;
-            display: none;
-            border: 1px solid;
-        }
-        
-        .result.phishing {
-            background-color: oklch(0.95 0.05 25);
-            color: oklch(0.45 0.2 25);
-            border-color: oklch(0.7 0.2 25);
-        }
-        
-        .result.safe {
-            background-color: oklch(0.95 0.05 140);
-            color: oklch(0.45 0.2 140);
-            border-color: oklch(0.7 0.2 140);
-        }
-        
-        .loading {
-            text-align: center;
-            color: var(--muted-foreground);
-            font-style: italic;
-        }
-        
-        .error {
-            background-color: oklch(0.95 0.05 25);
-            color: oklch(0.45 0.2 25);
-            border-color: oklch(0.7 0.2 25);
-        }
-        
-        .examples {
-            margin-top: 30px;
-            padding: 24px;
-            background-color: var(--muted);
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-        }
-        
-        .examples h3 {
-            margin-top: 0;
-            color: var(--foreground);
-            font-size: 1.125rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-        }
-        
-        .example-item {
-            margin: 12px 0;
-            padding: 16px;
-            background-color: var(--card);
-            border-radius: calc(var(--radius) - 2px);
-            border-left: 4px solid var(--primary);
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid var(--border);
-        }
-        
-        .example-item:hover {
-            background-color: var(--primary);
-            color: var(--primary-foreground);
-            transform: translateX(4px);
-        }
-        
-        .example-label {
-            font-weight: 600;
-            color: inherit;
-            font-size: 0.875rem;
-            margin-bottom: 8px;
-        }
-        
-        .example-text {
-            color: inherit;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 0.875rem;
-            opacity: 0.9;
-        }
-        
-        .stats {
-            margin-top: 20px;
-            padding: 20px;
-            background-color: var(--muted);
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            display: none;
-        }
-        
-        .stats h3 {
-            margin-top: 0;
-            color: var(--primary);
-            font-size: 1.125rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-        }
-        
-        .stat-item {
-            display: flex;
-            justify-content: space-between;
-            margin: 8px 0;
-            padding: 8px 0;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .stat-label {
-            font-weight: 600;
-            color: var(--foreground);
-        }
-        
-        .stat-value {
-            color: var(--accent);
-            font-weight: 600;
-        }
-        
-        .history {
-            margin-top: 20px;
-            padding: 20px;
-            background-color: var(--muted);
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            display: none;
-        }
-        
-        .history h3 {
-            margin-top: 0;
-            color: var(--primary);
-            font-size: 1.125rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-        }
-        
-        .history-item {
-            padding: 12px;
-            margin: 8px 0;
-            background-color: var(--card);
-            border-radius: calc(var(--radius) - 2px);
-            border-left: 4px solid var(--primary);
-            border: 1px solid var(--border);
-        }
-        
-        .history-item.phishing {
-            border-left-color: oklch(0.7 0.2 25);
-        }
-        
-        .history-item.safe {
-            border-left-color: oklch(0.7 0.2 140);
-        }
-        
-        .clear-history {
-            background-color: var(--secondary);
-            color: var(--secondary-foreground);
-            border: none;
-            padding: 8px 16px;
-            border-radius: calc(var(--radius) - 2px);
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 16px;
-            transition: all 0.2s;
-        }
-        
-        .clear-history:hover {
-            background-color: oklch(0.6 0.18 65);
-        }
-        
-        .navbar {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            padding: 20px 0;
-            margin-bottom: 30px;
-            border-radius: var(--radius);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        
-        .nav-container {
-            max-width: 800px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-        }
-        
-        .nav-brand {
-            color: var(--primary-foreground);
-            font-size: 1.5rem;
-            font-weight: 700;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .nav-links {
-            display: flex;
-            gap: 12px;
-        }
-        
-        .nav-button {
-            background-color: rgba(255, 255, 255, 0.15);
-            color: var(--primary-foreground);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 10px 20px;
-            border-radius: calc(var(--radius) - 2px);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.875rem;
-            transition: all 0.2s;
-            backdrop-filter: blur(10px);
-        }
-        
-        .nav-button:hover {
-            background-color: rgba(255, 255, 255, 0.25);
-            border-color: rgba(255, 255, 255, 0.3);
-            color: var(--primary-foreground);
-            text-decoration: none;
-            transform: translateY(-1px);
-        }
-    </style>
+    :root {
+      --background: oklch(1 0 0);
+      --foreground: oklch(0.35 0 0);
+      --card: oklch(0.98 0 0);
+      --card-foreground: oklch(0.25 0 0);
+      --primary: oklch(0.55 0.15 200);
+      --primary-foreground: oklch(1 0 0);
+      --secondary: oklch(0.65 0.18 65);
+      --secondary-foreground: oklch(1 0 0);
+      --muted: oklch(0.98 0 0);
+      --muted-foreground: oklch(0.35 0 0);
+      --accent: oklch(0.65 0.18 65);
+      --accent-foreground: oklch(1 0 0);
+      --border: oklch(0.92 0 0);
+      --input: oklch(0.98 0 0);
+      --ring: oklch(0.55 0.15 200);
+      --radius: 0.5rem;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      min-height: 100vh;
+      padding: 20px;
+      color: var(--foreground);
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 40px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+      border: 1px solid var(--border);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      color: white;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      margin-bottom: 10px;
+    }
+
+    header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .back-button {
+      background-color: rgba(255, 255, 255, 0.15);
+      color: var(--primary-foreground);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 12px 24px;
+      border-radius: var(--radius);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.2s;
+      display: inline-block;
+      margin-top: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .back-button:hover {
+      background-color: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    /* Keep your form styling but adapt to card look */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) - 2px);
+      font-size: 16px;
+      resize: vertical;
+      min-height: 100px;
+      background-color: var(--input);
+      color: var(--foreground);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--ring);
+      box-shadow: 0 0 0 3px rgba(86, 142, 255, 0.1);
+    }
+
+    button {
+      background: var(--primary);
+      color: var(--primary-foreground);
+      padding: 12px 24px;
+      border: none;
+      border-radius: calc(var(--radius) - 2px);
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    button:hover {
+      background: oklch(0.5 0.15 200);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: calc(var(--radius) - 2px);
+      font-size: 18px;
+      font-weight: 600;
+      text-align: center;
+      display: none;
+      border: 1px solid;
+    }
+
+    .result.phishing {
+      background-color: oklch(0.95 0.05 25);
+      color: oklch(0.45 0.2 25);
+      border-color: oklch(0.7 0.2 25);
+    }
+
+    .result.safe {
+      background-color: oklch(0.95 0.05 140);
+      color: oklch(0.45 0.2 140);
+      border-color: oklch(0.7 0.2 140);
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 30px;
+      color: white;
+      opacity: 0.8;
+    }
+  </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="/" class="nav-brand">
-                <span style="font-size: 1.2em;">🛡️</span> First Principles Bank
-            </a>
-            <div class="nav-links">
-                <a href="news-tool-main/" class="nav-button">📰 News Tool</a>
-                <a href="http://localhost:3000" class="nav-button" target="_blank">📋 News Digest</a>
-            </div>
-        </div>
-    </nav>
-    
-    <div class="container">
-        <h1>🛡️ Phishing Detection Demo</h1>
-        <p style="text-align: center; color: var(--muted-foreground); margin-bottom: 30px;">
-            Protect yourself from phishing attacks with our AI-powered detection tool
-        </p>
-        
-        <form id="phishingForm">
-            <div class="form-group">
-                <label for="textInput">Enter URL or message to check:</label>
-                <textarea 
-                    id="textInput" 
-                    placeholder="Paste a suspicious URL, email, or message here..."
-                    required
-                ></textarea>
-            </div>
-            
-            <button type="submit" id="checkButton">Check for Phishing</button>
-        </form>
-        
-        <div id="result" class="result"></div>
-        
-        <div id="stats" class="stats">
-            <h3>📊 Statistics</h3>
-            <div class="stat-item">
-                <span class="stat-label">Total Checks:</span>
-                <span class="stat-value" id="totalChecks">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Phishing Detected:</span>
-                <span class="stat-value" id="phishingCount">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Safe Content:</span>
-                <span class="stat-value" id="safeCount">0</span>
-            </div>
-        </div>
-        
-        <div id="history" class="history">
-            <h3>📝 Recent Checks</h3>
-            <button class="clear-history" onclick="clearHistory()">Clear History</button>
-            <div id="historyList"></div>
-        </div>
-        
-        <div class="examples">
-            <h3>Try these examples:</h3>
-            <div class="example-item">
-                <div class="example-label">Suspicious URL:</div>
-                <div class="example-text">https://secure-bank-login.verify-account.com/urgent-action-required</div>
-            </div>
-            <div class="example-item">
-                <div class="example-label">Phishing Email:</div>
-                <div class="example-text">URGENT: Your account will be suspended! Click here to verify your identity immediately.</div>
-            </div>
-            <div class="example-item">
-                <div class="example-label">Safe URL:</div>
-                <div class="example-text">https://www.google.com</div>
-            </div>
-        </div>
-    </div>
+  <div class="container">
+    <header>
+      <h1>🛡️ Phishing Detection Demo</h1>
+      <p>Powered by AI • First Principles Bank</p>
+      <a href="http://localhost:5000" class="back-button">⬅️ Back to Dashboard</a>
+    </header>
 
-    <script>
-        // Statistics and history tracking
-        let stats = {
-            totalChecks: 0,
-            phishingCount: 0,
-            safeCount: 0
-        };
-        
-        let history = [];
-        
-        // Load stats from localStorage
-        function loadStats() {
-            const savedStats = localStorage.getItem('phishingStats');
-            if (savedStats) {
-                stats = JSON.parse(savedStats);
-                updateStatsDisplay();
-            }
-        }
-        
-        // Save stats to localStorage
-        function saveStats() {
-            localStorage.setItem('phishingStats', JSON.stringify(stats));
-        }
-        
-        // Load history from localStorage
-        function loadHistory() {
-            const savedHistory = localStorage.getItem('phishingHistory');
-            if (savedHistory) {
-                history = JSON.parse(savedHistory);
-                updateHistoryDisplay();
-            }
-        }
-        
-        // Save history to localStorage
-        function saveHistory() {
-            localStorage.setItem('phishingHistory', JSON.stringify(history));
-        }
-        
-        // Update stats display
-        function updateStatsDisplay() {
-            document.getElementById('totalChecks').textContent = stats.totalChecks;
-            document.getElementById('phishingCount').textContent = stats.phishingCount;
-            document.getElementById('safeCount').textContent = stats.safeCount;
-            
-            if (stats.totalChecks > 0) {
-                document.getElementById('stats').style.display = 'block';
-            }
-        }
-        
-        // Update history display
-        function updateHistoryDisplay() {
-            const historyList = document.getElementById('historyList');
-            historyList.innerHTML = '';
-            
-            if (history.length > 0) {
-                document.getElementById('history').style.display = 'block';
-                
-                history.slice(0, 10).forEach(item => {
-                    const historyItem = document.createElement('div');
-                    historyItem.className = `history-item ${item.prediction.toLowerCase()}`;
-                    historyItem.innerHTML = `
-                        <strong>${item.prediction}</strong> - ${item.text.substring(0, 50)}${item.text.length > 50 ? '...' : ''}
-                        <br><small>${new Date(item.timestamp).toLocaleString()}</small>
-                    `;
-                    historyList.appendChild(historyItem);
-                });
-            }
-        }
-        
-        // Clear history
-        function clearHistory() {
-            history = [];
-            saveHistory();
-            updateHistoryDisplay();
-        }
-        
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadStats();
-            loadHistory();
-        });
-        
-        document.getElementById('phishingForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const textInput = document.getElementById('textInput');
-            const checkButton = document.getElementById('checkButton');
-            const resultDiv = document.getElementById('result');
-            
-            const text = textInput.value.trim();
-            
-            if (!text) {
-                showResult('Please enter some text to check.', 'error');
-                return;
-            }
-            
-            // Show loading state
-            checkButton.disabled = true;
-            checkButton.textContent = 'Checking...';
-            resultDiv.style.display = 'none';
-            
-            try {
-                const response = await fetch('/predict', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ text: text })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    const prediction = data.prediction;
-                    const resultClass = prediction === 'Phishing' ? 'phishing' : 'safe';
-                    showResult(`Result: ${prediction}`, resultClass);
-                    
-                    // Update statistics
-                    stats.totalChecks++;
-                    if (prediction === 'Phishing') {
-                        stats.phishingCount++;
-                    } else {
-                        stats.safeCount++;
-                    }
-                    saveStats();
-                    updateStatsDisplay();
-                    
-                    // Add to history
-                    history.unshift({
-                        text: text,
-                        prediction: prediction,
-                        timestamp: new Date().toISOString()
-                    });
-                    
-                    // Keep only last 50 items
-                    if (history.length > 50) {
-                        history = history.slice(0, 50);
-                    }
-                    
-                    saveHistory();
-                    updateHistoryDisplay();
-                    
-                } else {
-                    showResult(`Error: ${data.error || 'Unknown error'}`, 'error');
-                }
-                
-                // Always reset button after response
-                checkButton.disabled = false;
-                checkButton.textContent = 'Check for Phishing';
-            } catch (error) {
-                showResult(`Network error: ${error.message}`, 'error');
-                checkButton.disabled = false;
-                checkButton.textContent = 'Check for Phishing';
-            }
-        });
-        
-        function showResult(message, className) {
-            const resultDiv = document.getElementById('result');
-            resultDiv.textContent = message;
-            resultDiv.className = `result ${className}`;
-            resultDiv.style.display = 'block';
-        }
-        
-        // Add click handlers for example items
-        document.querySelectorAll('.example-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const exampleText = this.querySelector('.example-text').textContent;
-                document.getElementById('textInput').value = exampleText;
-            });
-        });
-    </script>
+    <!-- Your form / results section stays here -->
+
+    <footer>
+      <p>Generated with AI • Updated automatically</p>
+    </footer>
+  </div>
 </body>
 </html>
