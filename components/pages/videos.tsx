@@ -6,8 +6,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { PlayCircle, CheckCircle, Star, Trophy, BookOpen, Clock } from "lucide-react"
+import { Input } from "@/components/ui/input" // Added for chat input
+import {
+  PlayCircle,
+  CheckCircle,
+  Star,
+  Trophy,
+  BookOpen,
+  Clock,
+  Bot, // Added Icon
+  Send, // Added Icon
+  User, // Added Icon
+  MessageSquare, // Added Icon
+  X, // Added Icon
+} from "lucide-react"
+import OpenAI from "openai";
 
+// Interface definitions (unchanged)
 interface VideosPageProps {
   onBack: () => void
 }
@@ -28,6 +43,12 @@ interface Quiz {
   correctAnswer: number
 }
 
+interface Message {
+  sender: "user" | "ai"
+  text: string
+}
+
+// Video data (unchanged)
 const videos: Video[] = [
   {
     id: "compound-basics",
@@ -139,12 +160,100 @@ const videos: Video[] = [
   },
 ]
 
+// ++ NEW: AI Assistant Component
+function AIAssistant() {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      sender: "ai",
+      text: "Hi! I'm your AI Tutor. Ask me anything about the video you're watching or any financial topic.",
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSendMessage = async () => {
+    if (input.trim() === "") return;
+
+    const newMessages: Message[] = [...messages, { sender: "user", text: input }];
+    setMessages(newMessages);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const response = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: input }),
+      });
+
+      const data = await response.json();
+      setMessages((prev) => [...prev, { sender: "ai", text: data.answer }]);
+    } catch (error) {
+      setMessages((prev) => [...prev, { sender: "ai", text: "Error fetching AI response." }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card className="h-full flex flex-col w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Bot className="w-5 h-5 text-primary" />
+          AI Tutor
+        </CardTitle>
+        <CardDescription>Your personal learning assistant</CardDescription>
+      </CardHeader>
+      <CardContent className="flex-1 flex flex-col gap-4 overflow-y-auto">
+        <div className="flex-1 space-y-4 pr-2 -mr-2 overflow-y-auto">
+          {messages.map((msg, index) => (
+            <div key={index} className={`flex items-start gap-3 ${msg.sender === "user" ? "justify-end" : ""}`}>
+              {msg.sender === "ai" && (
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Bot className="w-5 h-5 text-primary" />
+                </div>
+              )}
+              <div
+                className={`p-3 rounded-lg max-w-[85%] ${
+                  msg.sender === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
+                }`}
+              >
+                <p className="text-sm">{msg.text}</p>
+              </div>
+              {msg.sender === "user" && (
+                <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+                  <User className="w-5 h-5 text-accent-foreground" />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+            placeholder="Ask a question..."
+            aria-label="Ask AI Tutor a question"
+          />
+          <Button onClick={handleSendMessage} aria-label="Send message" disabled={loading}>
+            {loading ? "..." : <Send className="w-4 h-4" />}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+
 export function VideosPage({ onBack }: VideosPageProps) {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
   const [showQuiz, setShowQuiz] = useState(false)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [quizCompleted, setQuizCompleted] = useState(false)
   const [watchedVideos, setWatchedVideos] = useState<string[]>(["saving-strategies"])
+  // ++ NEW: State for controlling the sidebar visibility
+  const [isAssistantOpen, setIsAssistantOpen] = useState(true)
 
   const completedCount = videos.filter((v) => watchedVideos.includes(v.id)).length
   const progressPercentage = (completedCount / videos.length) * 100
@@ -189,303 +298,320 @@ export function VideosPage({ onBack }: VideosPageProps) {
       showBackButton
       onBack={onBack}
     >
-      <div className="space-y-6">
-        {/* Progress Section */}
-        <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-xl font-bold text-foreground">Your Learning Progress</h3>
-                <p className="text-muted-foreground">Keep watching to unlock financial knowledge!</p>
-              </div>
-              <div className="text-right">
-                <div className="flex items-center gap-2 mb-2">
-                  <Trophy className="w-5 h-5 text-accent" />
-                  <span className="font-bold text-lg">
-                    {completedCount}/{videos.length} Complete
-                  </span>
+      {/* ++ NEW: Flex container for main content and sidebar */}
+      <div className="flex gap-6">
+        {/* Main Content Area */}
+        <main className="flex-1 min-w-0 space-y-6">
+          {/* Progress Section */}
+          <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">Your Learning Progress</h3>
+                  <p className="text-muted-foreground">Keep watching to unlock financial knowledge!</p>
                 </div>
-                <Badge variant="secondary" className="bg-accent/20 text-accent-foreground">
-                  {Math.round(progressPercentage)}% Progress
-                </Badge>
-              </div>
-            </div>
-            <Progress value={progressPercentage} className="h-3" />
-          </CardContent>
-        </Card>
-
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Video List */}
-          <div className="lg:col-span-1 space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-primary" />
-                  Video Library
-                </CardTitle>
-                <CardDescription>Choose a video to start learning</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {videos.map((video) => (
-                  <div
-                    key={video.id}
-                    className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
-                      selectedVideo?.id === video.id
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                    onClick={() => handleVideoPlay(video)}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 mt-1">
-                        {watchedVideos.includes(video.id) ? (
-                          <CheckCircle className="w-5 h-5 text-green-500" />
-                        ) : (
-                          <PlayCircle className="w-5 h-5 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm text-foreground mb-1">{video.title}</h4>
-                        <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{video.description}</p>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={`text-xs ${getDifficultyColor(video.difficulty)}`}>
-                            {video.difficulty}
-                          </Badge>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Clock className="w-3 h-3" />
-                            {video.duration}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                <div className="text-right">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Trophy className="w-5 h-5 text-accent" />
+                    <span className="font-bold text-lg">
+                      {completedCount}/{videos.length} Complete
+                    </span>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
+                  <Badge variant="secondary" className="bg-accent/20 text-accent-foreground">
+                    {Math.round(progressPercentage)}% Progress
+                  </Badge>
+                </div>
+              </div>
+              <Progress value={progressPercentage} className="h-3" />
+            </CardContent>
+          </Card>
 
-          {/* Video Player and Quiz */}
-          <div className="lg:col-span-2 space-y-6">
-            {selectedVideo ? (
-              <>
-                {/* Mock Video Player */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{selectedVideo.title}</CardTitle>
-                    <CardDescription>{selectedVideo.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Mock Video Player Interface */}
-                    <div className="relative bg-black rounded-lg overflow-hidden aspect-video mb-4">
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                        <div className="text-center text-white">
-                          <PlayCircle className="w-16 h-16 mx-auto mb-4 opacity-80" />
-                          <h3 className="text-xl font-semibold mb-2">{selectedVideo.title}</h3>
-                          <p className="text-sm opacity-80">Duration: {selectedVideo.duration}</p>
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Video List */}
+            <div className="lg:col-span-1 space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-primary" />
+                    Video Library
+                  </CardTitle>
+                  <CardDescription>Choose a video to start learning</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {videos.map((video) => (
+                    <div
+                      key={video.id}
+                      className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
+                        selectedVideo?.id === video.id
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                      onClick={() => handleVideoPlay(video)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 mt-1">
+                          {watchedVideos.includes(video.id) ? (
+                            <CheckCircle className="w-5 h-5 text-green-500" />
+                          ) : (
+                            <PlayCircle className="w-5 h-5 text-muted-foreground" />
+                          )}
                         </div>
-                      </div>
-
-                      {/* Mock Video Controls */}
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-4">
-                        <div className="flex items-center gap-4">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={handleVideoComplete}
-                            className="bg-white/20 hover:bg-white/30 text-white border-white/20"
-                          >
-                            <PlayCircle className="w-4 h-4 mr-2" />
-                            {watchedVideos.includes(selectedVideo.id) ? "Watch Again" : "Play Video"}
-                          </Button>
-                          <div className="flex-1 bg-white/20 rounded-full h-2">
-                            <div className="bg-primary h-2 rounded-full w-0"></div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm text-foreground mb-1">{video.title}</h4>
+                          <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{video.description}</p>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className={`text-xs ${getDifficultyColor(video.difficulty)}`}>
+                              {video.difficulty}
+                            </Badge>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Clock className="w-3 h-3" />
+                              {video.duration}
+                            </div>
                           </div>
-                          <span className="text-white text-sm">{selectedVideo.duration}</span>
                         </div>
                       </div>
                     </div>
-
-                    {watchedVideos.includes(selectedVideo.id) && (
-                      <div className="flex items-center gap-2 text-green-600 mb-4">
-                        <CheckCircle className="w-5 h-5" />
-                        <span className="font-medium">Video completed! Great job learning.</span>
-                      </div>
-                    )}
-
-                    {selectedVideo.quiz && (
-                      <Button
-                        onClick={handleVideoComplete}
-                        variant="outline"
-                        className="w-full bg-transparent"
-                        disabled={!watchedVideos.includes(selectedVideo.id)}
-                      >
-                        {watchedVideos.includes(selectedVideo.id)
-                          ? "Take Quiz to Test Your Knowledge"
-                          : "Complete video to unlock quiz"}
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Quiz Section */}
-                {showQuiz && selectedVideo.quiz && (
-                  <Card className="border-accent/30 bg-accent/5">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Star className="w-5 h-5 text-accent" />
-                        Knowledge Check Quiz
-                      </CardTitle>
-                      <CardDescription>Test what you learned from the video</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <h4 className="font-medium text-foreground">{selectedVideo.quiz.question}</h4>
-
-                        <div className="space-y-2">
-                          {selectedVideo.quiz.options.map((option, index) => (
-                            <label
-                              key={index}
-                              className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                                selectedAnswer === index
-                                  ? "border-primary bg-primary/10"
-                                  : "border-border hover:border-primary/50 hover:bg-primary/5"
-                              } ${
-                                quizCompleted && index === selectedVideo.quiz!.correctAnswer
-                                  ? "border-green-500 bg-green-500/10"
-                                  : quizCompleted &&
-                                      selectedAnswer === index &&
-                                      index !== selectedVideo.quiz!.correctAnswer
-                                    ? "border-red-500 bg-red-500/10"
-                                    : ""
-                              }`}
-                            >
-                              <input
-                                type="radio"
-                                name="quiz-answer"
-                                value={index}
-                                checked={selectedAnswer === index}
-                                onChange={() => setSelectedAnswer(index)}
-                                disabled={quizCompleted}
-                                className="sr-only"
-                              />
-                              <div
-                                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                                  selectedAnswer === index ? "border-primary" : "border-muted-foreground"
-                                }`}
-                              >
-                                {selectedAnswer === index && <div className="w-2 h-2 rounded-full bg-primary"></div>}
-                              </div>
-                              <span className="text-sm">
-                                {String.fromCharCode(65 + index)}. {option}
-                              </span>
-                            </label>
-                          ))}
-                        </div>
-
-                        {!quizCompleted ? (
-                          <Button onClick={handleQuizSubmit} disabled={selectedAnswer === null} className="w-full">
-                            Submit Answer
-                          </Button>
-                        ) : (
-                          <div className="text-center space-y-2">
-                            {selectedAnswer === selectedVideo.quiz.correctAnswer ? (
-                              <div className="text-green-600">
-                                <CheckCircle className="w-8 h-8 mx-auto mb-2" />
-                                <p className="font-semibold">Correct! Well done!</p>
-                                <p className="text-sm">You've earned 25 learning points!</p>
-                              </div>
-                            ) : (
-                              <div className="text-amber-600">
-                                <Star className="w-8 h-8 mx-auto mb-2" />
-                                <p className="font-semibold">
-                                  Good try! The correct answer was option{" "}
-                                  {String.fromCharCode(65 + selectedVideo.quiz.correctAnswer)}.
-                                </p>
-                                <p className="text-sm">You've earned 10 learning points for trying!</p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </>
-            ) : (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <PlayCircle className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-foreground mb-2">Choose a Video to Start Learning</h3>
-                  <p className="text-muted-foreground">
-                    Select any video from the library to begin your financial education journey
-                  </p>
+                  ))}
                 </CardContent>
               </Card>
-            )}
-          </div>
-        </div>
-
-        {/* Learning Tips */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-primary" />
-              Learning Tips for Success
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-                <h4 className="font-semibold text-foreground mb-2">Take Your Time</h4>
-                <p className="text-sm text-muted-foreground">
-                  Don't rush through the videos. Pause and replay sections you don't understand. Learning takes time!
-                </p>
-              </div>
-              <div className="p-4 bg-accent/5 rounded-lg border border-accent/20">
-                <h4 className="font-semibold text-foreground mb-2">Practice What You Learn</h4>
-                <p className="text-sm text-muted-foreground">
-                  After watching videos, try using the calculators to see the concepts in action with your own numbers.
-                </p>
-              </div>
-              <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-                <h4 className="font-semibold text-foreground mb-2">Ask Questions</h4>
-                <p className="text-sm text-muted-foreground">
-                  If something doesn't make sense, don't be afraid to watch the video again or ask someone for help.
-                </p>
-              </div>
-              <div className="p-4 bg-accent/5 rounded-lg border border-accent/20">
-                <h4 className="font-semibold text-foreground mb-2">Start Small</h4>
-                <p className="text-sm text-muted-foreground">
-                  Begin with beginner videos even if you think you know the basics. A strong foundation is important!
-                </p>
-              </div>
             </div>
-            
-            {/* News Digest Button */}
-            <div className="mt-6 p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-semibold text-foreground mb-1">Stay Informed with Financial News</h4>
+
+            {/* Video Player and Quiz */}
+            <div className="lg:col-span-2 space-y-6">
+              {selectedVideo ? (
+                <>
+                  {/* Mock Video Player */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>{selectedVideo.title}</CardTitle>
+                      <CardDescription>{selectedVideo.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {/* Mock Video Player Interface */}
+                      <div className="relative bg-black rounded-lg overflow-hidden aspect-video mb-4">
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                          <div className="text-center text-white">
+                            <PlayCircle className="w-16 h-16 mx-auto mb-4 opacity-80" />
+                            <h3 className="text-xl font-semibold mb-2">{selectedVideo.title}</h3>
+                            <p className="text-sm opacity-80">Duration: {selectedVideo.duration}</p>
+                          </div>
+                        </div>
+
+                        {/* Mock Video Controls */}
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-4">
+                          <div className="flex items-center gap-4">
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={handleVideoComplete}
+                              className="bg-white/20 hover:bg-white/30 text-white border-white/20"
+                            >
+                              <PlayCircle className="w-4 h-4 mr-2" />
+                              {watchedVideos.includes(selectedVideo.id) ? "Watch Again" : "Play Video"}
+                            </Button>
+                            <div className="flex-1 bg-white/20 rounded-full h-2">
+                              <div className="bg-primary h-2 rounded-full w-0"></div>
+                            </div>
+                            <span className="text-white text-sm">{selectedVideo.duration}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {watchedVideos.includes(selectedVideo.id) && (
+                        <div className="flex items-center gap-2 text-green-600 mb-4">
+                          <CheckCircle className="w-5 h-5" />
+                          <span className="font-medium">Video completed! Great job learning.</span>
+                        </div>
+                      )}
+
+                      {selectedVideo.quiz && (
+                        <Button
+                          onClick={handleVideoComplete}
+                          variant="outline"
+                          className="w-full bg-transparent"
+                          disabled={!watchedVideos.includes(selectedVideo.id)}
+                        >
+                          {watchedVideos.includes(selectedVideo.id)
+                            ? "Take Quiz to Test Your Knowledge"
+                            : "Complete video to unlock quiz"}
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Quiz Section */}
+                  {showQuiz && selectedVideo.quiz && (
+                    <Card className="border-accent/30 bg-accent/5">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Star className="w-5 h-5 text-accent" />
+                          Knowledge Check Quiz
+                        </CardTitle>
+                        <CardDescription>Test what you learned from the video</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <h4 className="font-medium text-foreground">{selectedVideo.quiz.question}</h4>
+
+                          <div className="space-y-2">
+                            {selectedVideo.quiz.options.map((option, index) => (
+                              <label
+                                key={index}
+                                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                                  selectedAnswer === index
+                                    ? "border-primary bg-primary/10"
+                                    : "border-border hover:border-primary/50 hover:bg-primary/5"
+                                } ${
+                                  quizCompleted && index === selectedVideo.quiz!.correctAnswer
+                                    ? "border-green-500 bg-green-500/10"
+                                    : quizCompleted &&
+                                        selectedAnswer === index &&
+                                        index !== selectedVideo.quiz!.correctAnswer
+                                      ? "border-red-500 bg-red-500/10"
+                                      : ""
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name="quiz-answer"
+                                  value={index}
+                                  checked={selectedAnswer === index}
+                                  onChange={() => setSelectedAnswer(index)}
+                                  disabled={quizCompleted}
+                                  className="sr-only"
+                                />
+                                <div
+                                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                    selectedAnswer === index ? "border-primary" : "border-muted-foreground"
+                                  }`}
+                                >
+                                  {selectedAnswer === index && <div className="w-2 h-2 rounded-full bg-primary"></div>}
+                                </div>
+                                <span className="text-sm">
+                                  {String.fromCharCode(65 + index)}. {option}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+
+                          {!quizCompleted ? (
+                            <Button onClick={handleQuizSubmit} disabled={selectedAnswer === null} className="w-full">
+                              Submit Answer
+                            </Button>
+                          ) : (
+                            <div className="text-center space-y-2">
+                              {selectedAnswer === selectedVideo.quiz.correctAnswer ? (
+                                <div className="text-green-600">
+                                  <CheckCircle className="w-8 h-8 mx-auto mb-2" />
+                                  <p className="font-semibold">Correct! Well done!</p>
+                                  <p className="text-sm">You've earned 25 learning points!</p>
+                                </div>
+                              ) : (
+                                <div className="text-amber-600">
+                                  <Star className="w-8 h-8 mx-auto mb-2" />
+                                  <p className="font-semibold">
+                                    Good try! The correct answer was option{" "}
+                                    {String.fromCharCode(65 + selectedVideo.quiz.correctAnswer)}.
+                                  </p>
+                                  <p className="text-sm">You've earned 10 learning points for trying!</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </>
+              ) : (
+                <Card>
+                  <CardContent className="text-center py-12">
+                    <PlayCircle className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-foreground mb-2">Choose a Video to Start Learning</h3>
+                    <p className="text-muted-foreground">
+                      Select any video from the library to begin your financial education journey
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+
+          {/* Learning Tips */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-primary" />
+                Learning Tips for Success
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                  <h4 className="font-semibold text-foreground mb-2">Take Your Time</h4>
                   <p className="text-sm text-muted-foreground">
-                    Get AI-powered summaries of the latest financial news and market updates
+                    Don't rush through the videos. Pause and replay sections you don't understand. Learning takes time!
                   </p>
                 </div>
-                <Button 
-                  asChild
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
-                  <a 
-                    href="http://localhost:3001" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                  >
-                    📰 View News Digest
-                  </a>
-                </Button>
+                <div className="p-4 bg-accent/5 rounded-lg border border-accent/20">
+                  <h4 className="font-semibold text-foreground mb-2">Practice What You Learn</h4>
+                  <p className="text-sm text-muted-foreground">
+                    After watching videos, try using the calculators to see the concepts in action with your own numbers.
+                  </p>
+                </div>
+                <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                  <h4 className="font-semibold text-foreground mb-2">Ask Questions</h4>
+                  <p className="text-sm text-muted-foreground">
+                    If something doesn't make sense, use the AI Tutor or ask someone for help.
+                  </p>
+                </div>
+                <div className="p-4 bg-accent/5 rounded-lg border border-accent/20">
+                  <h4 className="font-semibold text-foreground mb-2">Start Small</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Begin with beginner videos even if you think you know the basics. A strong foundation is important!
+                  </p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </main>
+
+        {/* ++ NEW: AI Assistant Sidebar */}
+        <aside
+          className={`
+          flex-shrink-0 
+          transition-all duration-300 ease-in-out
+          hidden lg:block
+          ${isAssistantOpen ? "w-96" : "w-0"}
+        `}
+        >
+          <div className="h-full overflow-hidden">
+            <AIAssistant />
+          </div>
+        </aside>
+      </div>
+
+      {/* ++ NEW: Floating Action Button to toggle Assistant */}
+      <div className="fixed bottom-6 right-6 z-50 lg:hidden">
+        {/* On smaller screens, this button could toggle a modal/drawer instead */}
+        <Button
+          onClick={() => alert("AI Tutor would open in a modal on mobile!")}
+          size="icon"
+          className="rounded-full shadow-lg h-14 w-14"
+        >
+          <MessageSquare className="w-6 h-6" />
+          <span className="sr-only">Open AI Tutor</span>
+        </Button>
+      </div>
+      <div className="fixed bottom-6 right-6 z-50 hidden lg:block">
+        <Button
+          onClick={() => setIsAssistantOpen(!isAssistantOpen)}
+          size="icon"
+          className="rounded-full shadow-lg h-14 w-14"
+          aria-label={isAssistantOpen ? "Close AI Tutor" : "Open AI Tutor"}
+        >
+          {isAssistantOpen ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
+        </Button>
       </div>
     </PageLayout>
   )
